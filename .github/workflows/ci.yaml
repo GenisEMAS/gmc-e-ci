@@ -65,14 +65,14 @@ jobs:
             ghcr.io/genisemas/oca-ci/${{ matrix.image_name }}:latest
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
-          cache-from: type=registry,ref=ghcr.io/genisemas/oca-ci/${{ matrix.image_name }}:latest
+          cache-from: type=registry,ref=ghcr.io/emas-solutions/emas-e-ci/${{ matrix.image_name }}:latest
           cache-to: type=local,dest=/tmp/.buildx-cache
           load: true
 
       - name: Run Tests
         run: |
           docker run --rm -v ${PWD}/tests:/mnt/tests --network=host -e PGHOST=localhost \
-            ghcr.io/genisemas/oca-ci/${{ matrix.image_name }}:latest \
+            ghcr.io/emas-solutions/emas-e-ci/${{ matrix.image_name }}:latest \
             /mnt/tests/runtests.sh -v
         if: ${{ matrix.odoo_version != '8.0' && matrix.odoo_version != '9.0' }}
 
@@ -88,7 +88,7 @@ jobs:
           secrets: |
             github_pat=${{ secrets.PAT }}
           tags: |
-            ghcr.io/genisemas/oca-ci/${{ matrix.image_name }}:latest
+            ghcr.io/emas-solutions/emas-e-ci/${{ matrix.image_name }}:latest
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
           cache-from: type=local,src=/tmp/.buildx-cache
