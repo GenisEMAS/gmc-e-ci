@@ -1,6 +1,4 @@
 ARG codename=focal
-# Accept GitHub PAT as a secret
-ARG github_pat
 
 FROM ubuntu:$codename
 ENV LANG=C.UTF-8
@@ -133,12 +131,14 @@ RUN pip install --no-cache-dir \
 ARG odoo_org_repo=EMAS-Solutions/odoo
 ARG odoo_enterprise_repo=EMAS-Solutions/enterprise
 ADD https://api.github.com/repos/$odoo_org_repo/git/refs/heads/$odoo_version /tmp/odoo-version.json
-RUN mkdir -p /tmp/getodoo /tmp/enterprise \
-    && curl -sSL https://$github_pat@github.com/$odoo_org_repo/tarball/$odoo_version | tar -C /tmp/getodoo -xz \
-    && curl -sSL https://$github_pat@github.com/$odoo_enterprise_repo/tarball/$odoo_version | tar -C /tmp/enterprise -xz \
+RUN mkdir -p /tmp/getodoo /tmp/enterprise
+RUN --mount=type=secret,id=github_pat \
+    curl -sSL https://$(cat /run/secrets/github_pat)@github.com/$odoo_org_repo/tarball/$odoo_version | tar -C /tmp/getodoo -xz \
+    && curl -sSL https://$(cat /run/secrets/github_pat)@github.com/$odoo_enterprise_repo/tarball/$odoo_version | tar -C /tmp/enterprise -xz \
     && mv /tmp/getodoo/* /opt/odoo \
     && mv /tmp/enterprise/* /opt/odoo/addons \
     && rmdir /tmp/getodoo /tmp/enterprise
+
 RUN pip install --no-cache-dir -e /opt/odoo \
     && pip list
 

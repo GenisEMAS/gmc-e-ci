@@ -59,6 +59,7 @@ jobs:
             odoo_version=${{ matrix.odoo_version }}
             odoo_org_repo=${{ matrix.odoo_org_repo }}
             odoo_enterprise_repo=${{ matrix.odoo_enterprise_repo }}
+          secrets: |
             github_pat=${{ secrets.PAT }}
           tags: |
             ghcr.io/genisemas/oca-ci/${{ matrix.image_name }}:latest
@@ -84,6 +85,7 @@ jobs:
             odoo_version=${{ matrix.odoo_version }}
             odoo_org_repo=${{ matrix.odoo_org_repo }}
             odoo_enterprise_repo=${{ matrix.odoo_enterprise_repo }}
+          secrets: |
             github_pat=${{ secrets.PAT }}
           tags: |
             ghcr.io/genisemas/oca-ci/${{ matrix.image_name }}:latest
