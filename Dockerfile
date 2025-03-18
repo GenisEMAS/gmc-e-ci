@@ -1,6 +1,6 @@
 ARG codename=focal
 # Accept GitHub PAT as a secret
-ARG GITHUB_PAT
+ARG github_pat
 
 FROM ubuntu:$codename
 ENV LANG=C.UTF-8
@@ -9,22 +9,22 @@ USER root
 # Basic dependencies
 RUN apt-get update -qq \
     && DEBIAN_FRONTEND=noninteractive apt-get install -qq --no-install-recommends \
-        ca-certificates \
-        curl \
-        gettext \
-        git \
-        gnupg \
-        lsb-release \
-        software-properties-common \
-        expect-dev \
-        pipx
+    ca-certificates \
+    curl \
+    gettext \
+    git \
+    gnupg \
+    lsb-release \
+    software-properties-common \
+    expect-dev \
+    pipx
 
 ENV PIPX_BIN_DIR=/usr/local/bin
 
 # Install wkhtml
 RUN case $(lsb_release -c -s) in \
-      focal) WKHTML_DEB_URL=https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.focal_amd64.deb ;; \
-      jammy) WKHTML_DEB_URL=https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb ;; \
+    focal) WKHTML_DEB_URL=https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.focal_amd64.deb ;; \
+    jammy) WKHTML_DEB_URL=https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb ;; \
     esac \
     && curl -sSL $WKHTML_DEB_URL -o /tmp/wkhtml.deb \
     && apt-get update -qq \
@@ -33,10 +33,10 @@ RUN case $(lsb_release -c -s) in \
 
 # Install nodejs dependencies
 RUN case $(lsb_release -c -s) in \
-      focal) NODE_SOURCE="deb https://deb.nodesource.com/node_15.x focal main" \
-             && curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - ;; \
-      jammy) NODE_SOURCE="deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
-             && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg ;; \
+    focal) NODE_SOURCE="deb https://deb.nodesource.com/node_15.x focal main" \
+    && curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - ;; \
+    jammy) NODE_SOURCE="deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg ;; \
     esac \
     && echo "$NODE_SOURCE" | tee /etc/apt/sources.list.d/nodesource.list \
     && apt-get update -qq \
@@ -63,32 +63,32 @@ ARG python_version
 # Install build dependencies for python libs commonly used by Odoo and OCA
 RUN apt-get update -qq \
     && DEBIAN_FRONTEND=noninteractive apt-get install -qq --no-install-recommends \
-       build-essential \
-       python${python_version}-dev \
-       python${python_version}-venv \
-       # we need python 3 for our helper scripts
-       python3 \
-       python3-venv \
-       # for psycopg
-       libpq-dev \
-       # for lxml
-       libxml2-dev \
-       libxslt1-dev \
-       libz-dev \
-       libxmlsec1-dev \
-       # for python-ldap
-       libldap2-dev \
-       libsasl2-dev \
-       # need libjpeg to build older pillow versions
-       libjpeg-dev \
-       # for pycups
-       libcups2-dev \
-       # for mysqlclient \
-       default-libmysqlclient-dev \
-       # some other build tools
-       swig \
-       libffi-dev \
-       pkg-config
+    build-essential \
+    python${python_version}-dev \
+    python${python_version}-venv \
+    # we need python 3 for our helper scripts
+    python3 \
+    python3-venv \
+    # for psycopg
+    libpq-dev \
+    # for lxml
+    libxml2-dev \
+    libxslt1-dev \
+    libz-dev \
+    libxmlsec1-dev \
+    # for python-ldap
+    libldap2-dev \
+    libsasl2-dev \
+    # need libjpeg to build older pillow versions
+    libjpeg-dev \
+    # for pycups
+    libcups2-dev \
+    # for mysqlclient \
+    default-libmysqlclient-dev \
+    # some other build tools
+    swig \
+    libffi-dev \
+    pkg-config
 
 # We use manifestoo to check licenses, development status and list addons and dependencies
 RUN pipx install --pip-args="--no-cache-dir" "manifestoo>=0.3.1"
@@ -118,24 +118,24 @@ ADD https://raw.githubusercontent.com/OCA/OCB/$odoo_version/requirements.txt /tm
 # oldest pinned in Odoo's requirements.txt don't have wheels, and don't build
 # anymore with the latest cython.
 RUN sed -i -E "s/^(gevent|greenlet)==.*/\1/" /tmp/ocb-requirements.txt \
- && pip install --no-cache-dir \
-      -r /tmp/ocb-requirements.txt \
-      packaging
+    && pip install --no-cache-dir \
+    -r /tmp/ocb-requirements.txt \
+    packaging
 
 # Install other test requirements.
 # - coverage
 # - websocket-client is required for Odoo browser tests
 RUN pip install --no-cache-dir \
-  coverage \
-  websocket-client
+    coverage \
+    websocket-client
 
 # Install Odoo (use ADD for correct layer caching)
 ARG odoo_org_repo=EMAS-Solutions/odoo
 ARG odoo_enterprise_repo=EMAS-Solutions/enterprise
 ADD https://api.github.com/repos/$odoo_org_repo/git/refs/heads/$odoo_version /tmp/odoo-version.json
 RUN mkdir -p /tmp/getodoo /tmp/enterprise \
-    && curl -sSL https://$GITHUB_PAT@github.com/$odoo_org_repo/tarball/$odoo_version | tar -C /tmp/getodoo -xz \
-    && curl -sSL https://$GITHUB_PAT@github.com/$odoo_enterprise_repo/tarball/$odoo_version | tar -C /tmp/enterprise -xz \
+    && curl -sSL https://$github_pat@github.com/$odoo_org_repo/tarball/$odoo_version | tar -C /tmp/getodoo -xz \
+    && curl -sSL https://$github_pat@github.com/$odoo_enterprise_repo/tarball/$odoo_version | tar -C /tmp/enterprise -xz \
     && mv /tmp/getodoo/* /opt/odoo \
     && mv /tmp/enterprise/* /opt/odoo/addons \
     && rmdir /tmp/getodoo /tmp/enterprise
