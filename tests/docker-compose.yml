@@ -1,20 +1,29 @@
 services:
   test:
-    image: ghcr.io/oca/oca-ci/py3.10-ocb16.0:latest
-    # build:
-    #   context: ..
-    #   args:
-    #     codename: jammy
-    #     python_version: "3.10"
-    #     odoo_version: "16.0"
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        codename: jammy
+        python_version: "3.10"
+        odoo_version: "17.0"
+        odoo_org_repo: EMAS-Solutions/odoo
+        odoo_enterprise_repo: EMAS-Solutions/enterprise
+      secrets:
+        - github_pat
+    image: ghcr.io/genisemas/gmc-e-ci/py3.10-odoo17.0:latest
     volumes:
       - ..:/mnt/oca-ci
     working_dir: /mnt/oca-ci/tests
     depends_on:
       - postgres
   postgres:
-    image: postgres
+    image: postgres:12
     environment:
       POSTGRES_USER: odoo
       POSTGRES_PASSWORD: odoo
       POSTGRES_DB: odoo
+
+secrets:
+  github_pat:
+    environment: GITHUB_PAT

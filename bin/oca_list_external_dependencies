@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 #
 # Print transitive external dependencies of addons in $ADDONS_DIR.
 # For the transitive search to work, dependencie must be available in
