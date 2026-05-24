@@ -136,7 +136,11 @@ RUN pip install --no-cache-dir \
 COPY ci-deps/odoo /opt/odoo
 COPY ci-deps/enterprise/ /opt/odoo/addons/
 
-RUN pip install --no-cache-dir -e /opt/odoo \
+RUN if [ -f /opt/odoo/requirements.txt ]; then \
+      pip install --no-cache-dir -r /opt/odoo/requirements.txt; \
+    fi \
+    && pip install --no-cache-dir -e /opt/odoo --config-setting=editable_mode=compat \
+    && python -c "import odoo; import odoo.cli" \
     && pip list
 
 # Make an empty odoo.cfg

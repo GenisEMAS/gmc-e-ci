@@ -7,3 +7,9 @@ do
     echo "Waiting for postgres..."
     sleep 2
 done
+
+# Ensure the test database exists (may be dropped between tests).
+if ! psql -d "${PGDATABASE}" -c "SELECT 1" >/dev/null 2>&1; then
+    echo "Creating database ${PGDATABASE}..."
+    createdb "${PGDATABASE}"
+fi

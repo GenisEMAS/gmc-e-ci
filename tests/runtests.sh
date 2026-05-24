@@ -7,10 +7,11 @@ set -e
 
 here=$(dirname $0)
 
-testvenv=/tmp/testvenv 
+testvenv=/tmp/testvenv
 /usr/bin/python3 -m venv $testvenv
 $testvenv/bin/pip install -r $here/requirements.txt
 
-export PATH=$here/../bin:$PATH
+# Use the Odoo virtualenv for python/odoo commands invoked by tests.
+export PATH=/opt/odoo-venv/bin:/usr/local/bin:${PATH}
 
 $testvenv/bin/pytest --color=yes --ignore $here/data $here "$@"
