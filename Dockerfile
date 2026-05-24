@@ -48,12 +48,6 @@ RUN curl -sSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
     && apt-get update -qq \
     && DEBIAN_FRONTEND=noninteractive apt-get install -qq postgresql-client-12
 
-# Install Google following Odoo's Runbot guideline https://github.com/odoo/runbot/blob/f8f435d468135486146a2e61e8d15d0f453c0e15/runbot/data/dockerfile_data.xml#L139-L140
-RUN curl -sSL https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_126.0.6478.182-1_amd64.deb -o /tmp/chrome.deb \
-    && apt-get update -qq \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --no-install-recommends /tmp/chrome.deb  \
-    && rm /tmp/chrome.deb
-
 RUN add-apt-repository -y ppa:deadsnakes/ppa
 
 ARG python_version
@@ -86,7 +80,18 @@ RUN apt-get update -qq \
     # some other build tools
     swig \
     libffi-dev \
-    pkg-config
+    pkg-config \
+    jq \
+    unzip \
+    # chrome
+    '?and(?name(libatk-bridge.*) | ?name(libatk1.*) | ?name(libdrm2.*) | ?name(libxcomposite1.*) | ?name(libXdamage.*) | ?name(libxfixes3.*) | ?name(libXrandr.*) | ?name(libgbm.*) | ?name(libxkbcommon0.*) | ?name(libpango1.*) | ?name(libcairo2.*) | ?name(libasound2), ?not(?name(.*-dev)))'
+
+# Install Chrome for Odoo browser tests (chrome-for-testing, not a fixed .deb URL).
+ARG chrome_milestone=139
+RUN curl -fsSL "$(curl -fsSL https://googlechromelabs.github.io/chrome-for-testing/latest-versions-per-milestone-with-downloads.json | jq -r '.milestones."'"$chrome_milestone"'".downloads.chrome | .[] | select(.platform == "linux64") .url')" -o /tmp/chrome.zip \
+    && unzip /tmp/chrome.zip -d /opt \
+    && ln -snf /opt/chrome-linux64/chrome /usr/bin/google-chrome \
+    && rm /tmp/chrome.zip
 
 # We use manifestoo to check licenses, development status and list addons and dependencies
 RUN pipx install --pip-args="--no-cache-dir" "manifestoo>=0.3.1"
@@ -127,17 +132,28 @@ RUN pip install --no-cache-dir \
     coverage \
     websocket-client
 
-# Install Odoo (use ADD for correct layer caching)
+# Install Odoo from private GitHub repositories (requires PAT build secret).
 ARG odoo_org_repo=EMAS-Solutions/odoo
 ARG odoo_enterprise_repo=EMAS-Solutions/enterprise
-ADD https://api.github.com/repos/$odoo_org_repo/git/refs/heads/$odoo_version /tmp/odoo-version.json
-RUN mkdir -p /tmp/getodoo /tmp/enterprise
+RUN mkdir -p /opt/odoo /opt/odoo/addons
 RUN --mount=type=secret,id=github_pat \
-    curl -sSL https://$(cat /run/secrets/github_pat)@github.com/$odoo_org_repo/tarball/$odoo_version | tar -C /tmp/getodoo -xz \
-    && curl -sSL https://$(cat /run/secrets/github_pat)@github.com/$odoo_enterprise_repo/tarball/$odoo_version | tar -C /tmp/enterprise -xz \
-    && mv /tmp/getodoo/* /opt/odoo \
-    && mv /tmp/enterprise/* /opt/odoo/addons \
-    && rmdir /tmp/getodoo /tmp/enterprise
+    set -eu \
+    && GITHUB_TOKEN="$(tr -d '[:space:]' < /run/secrets/github_pat)" \
+    && if [ -z "${GITHUB_TOKEN}" ]; then \
+         echo "ERROR: github_pat secret is empty. Configure repository secret PAT with read access to ${odoo_org_repo} and ${odoo_enterprise_repo}." >&2; \
+         exit 1; \
+       fi \
+    && download_repo() { \
+         repo="${1}"; dest="${2}"; \
+         echo "Downloading ${repo} @ ${odoo_version}..."; \
+         curl -fsSL \
+           -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+           -H "Accept: application/vnd.github+json" \
+           "https://api.github.com/repos/${repo}/tarball/${odoo_version}" \
+         | tar -xz --strip-components=1 -C "${dest}"; \
+       } \
+    && download_repo "${odoo_org_repo}" /opt/odoo \
+    && download_repo "${odoo_enterprise_repo}" /opt/odoo/addons
 
 RUN pip install --no-cache-dir -e /opt/odoo \
     && pip list
