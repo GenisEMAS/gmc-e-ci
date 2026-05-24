@@ -29,6 +29,7 @@ jobs:
         include:
           - python_version: "3.10"
             codename: jammy
+            chrome_milestone: "139"
             odoo_version: "17.0"
             odoo_org_repo: "EMAS-Solutions/odoo"
             odoo_enterprise_repo: "EMAS-Solutions/enterprise"
@@ -73,6 +74,7 @@ jobs:
           file: Dockerfile
           build-args: |
             codename=${{ matrix.codename }}
+            chrome_milestone=${{ matrix.chrome_milestone }}
             python_version=${{ matrix.python_version }}
             odoo_version=${{ matrix.odoo_version }}
             odoo_org_repo=${{ matrix.odoo_org_repo }}
@@ -100,6 +102,7 @@ jobs:
           file: Dockerfile
           build-args: |
             codename=${{ matrix.codename }}
+            chrome_milestone=${{ matrix.chrome_milestone }}
             python_version=${{ matrix.python_version }}
             odoo_version=${{ matrix.odoo_version }}
             odoo_org_repo=${{ matrix.odoo_org_repo }}
