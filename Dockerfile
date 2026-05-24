@@ -107,7 +107,7 @@ RUN pipx inject --pip-args="--no-cache-dir" pyproject-dependencies $build_deps
 # make sure addons we test declare all their python dependencies properly
 ARG setuptools_constraint
 RUN python$python_version -m venv /opt/odoo-venv \
-    && /opt/odoo-venv/bin/pip install -U "setuptools$setuptools_constraint" "wheel" "pip" \
+    && /opt/odoo-venv/bin/pip install -U "pip" "wheel" "setuptools$setuptools_constraint" \
     && /opt/odoo-venv/bin/pip list
 ENV PATH=/opt/odoo-venv/bin:$PATH
 
@@ -126,7 +126,8 @@ RUN sed -i -E "/^(gevent|greenlet)==/d" /tmp/ocb-requirements.txt \
     && pip install --no-cache-dir \
     -r /tmp/ocb-requirements.txt \
     packaging \
-    && python -c "import gevent, greenlet, lxml, psycopg2; print('OCB deps OK')"
+    && pip install --no-cache-dir -U "setuptools>=68.0.0" wheel \
+    && python -c "import pkg_resources; import gevent, greenlet, lxml, psycopg2; print('OCB deps OK')"
 
 # Install other test requirements.
 # - coverage
@@ -139,12 +140,13 @@ RUN pip install --no-cache-dir \
 COPY ci-deps/odoo /opt/odoo
 COPY ci-deps/enterprise/ /opt/odoo/addons/
 
-RUN if [ -f /opt/odoo/requirements.txt ]; then \
+RUN pip install --no-cache-dir -U "setuptools>=68.0.0" wheel \
+    && if [ -f /opt/odoo/requirements.txt ]; then \
       sed -i -E "/^(gevent|greenlet)==/d" /opt/odoo/requirements.txt; \
       pip install --no-cache-dir -r /opt/odoo/requirements.txt; \
     fi \
     && pip install --no-cache-dir -e /opt/odoo --config-setting=editable_mode=compat \
-    && python -c "import odoo; import odoo.cli" \
+    && python -c "import pkg_resources; import odoo; import odoo.cli" \
     && pip list
 
 # Make an empty odoo.cfg

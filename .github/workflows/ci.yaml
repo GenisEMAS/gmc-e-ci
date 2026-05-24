@@ -108,7 +108,7 @@ jobs:
         run: |
           docker run --rm \
             "${{ steps.image.outputs.prefix }}/${{ matrix.image_name }}:latest" \
-            python -c "import gevent, greenlet, lxml, psycopg2; import odoo; import odoo.cli; print('deps OK')"
+            python -c "import pkg_resources; import gevent, greenlet, lxml, psycopg2; import odoo; import odoo.cli; print('deps OK')"
 
       - name: Wait for PostgreSQL
         run: |
