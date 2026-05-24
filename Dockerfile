@@ -116,11 +116,12 @@ ARG odoo_version
 # Install Odoo requirements (use ADD for correct layer caching).
 # We use requirements from OCB for easier maintenance of older versions.
 ADD https://raw.githubusercontent.com/OCA/OCB/$odoo_version/requirements.txt /tmp/ocb-requirements.txt
-# The sed command is to use the latest version of gevent and greenlet. The
-# latest version works with all versions of Odoo that we support here, and the
-# oldest pinned in Odoo's requirements.txt don't have wheels, and don't build
-# anymore with the latest cython.
-RUN sed -i -E "s/^(gevent|greenlet)==.*/\1/" /tmp/ocb-requirements.txt \
+# Install gevent/greenlet from binary wheels (unpinned "gevent" pulls latest
+# source and fails to compile with current Cython on Python 3.10).
+RUN sed -i -E "/^(gevent|greenlet)==/d" /tmp/ocb-requirements.txt \
+    && pip install --no-cache-dir --only-binary :all: \
+    "gevent==22.10.2" \
+    "greenlet==2.0.2" \
     && pip install --no-cache-dir \
     -r /tmp/ocb-requirements.txt \
     packaging
@@ -137,6 +138,7 @@ COPY ci-deps/odoo /opt/odoo
 COPY ci-deps/enterprise/ /opt/odoo/addons/
 
 RUN if [ -f /opt/odoo/requirements.txt ]; then \
+      sed -i -E "/^(gevent|greenlet)==/d" /opt/odoo/requirements.txt; \
       pip install --no-cache-dir -r /opt/odoo/requirements.txt; \
     fi \
     && pip install --no-cache-dir -e /opt/odoo --config-setting=editable_mode=compat \
