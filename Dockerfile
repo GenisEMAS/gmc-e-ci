@@ -115,16 +115,18 @@ ARG odoo_version
 
 # Install Odoo requirements (use ADD for correct layer caching).
 # We use requirements from OCB for easier maintenance of older versions.
+COPY requirements-ci-constraints.txt /tmp/requirements-ci-constraints.txt
 ADD https://raw.githubusercontent.com/OCA/OCB/$odoo_version/requirements.txt /tmp/ocb-requirements.txt
 # Install gevent/greenlet from binary wheels (unpinned "gevent" pulls latest
 # source and fails to compile with current Cython on Python 3.10).
 RUN sed -i -E "/^(gevent|greenlet)==/d" /tmp/ocb-requirements.txt \
-    && pip install --no-cache-dir --only-binary :all: \
-    "gevent==22.10.2" \
-    "greenlet==2.0.2" \
+    && (pip install --no-cache-dir --only-binary gevent,greenlet \
+          -r /tmp/requirements-ci-constraints.txt \
+        || pip install --no-cache-dir -r /tmp/requirements-ci-constraints.txt) \
     && pip install --no-cache-dir \
     -r /tmp/ocb-requirements.txt \
-    packaging
+    packaging \
+    && python -c "import gevent, greenlet, lxml, psycopg2; print('OCB deps OK')"
 
 # Install other test requirements.
 # - coverage

@@ -104,6 +104,12 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           load: true
 
+      - name: Verify dependencies in image
+        run: |
+          docker run --rm \
+            "${{ steps.image.outputs.prefix }}/${{ matrix.image_name }}:latest" \
+            python -c "import gevent, greenlet, lxml, psycopg2; import odoo; import odoo.cli; print('deps OK')"
+
       - name: Wait for PostgreSQL
         run: |
           sudo apt-get update -qq
