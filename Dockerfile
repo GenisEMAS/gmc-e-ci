@@ -132,28 +132,9 @@ RUN pip install --no-cache-dir \
     coverage \
     websocket-client
 
-# Install Odoo from private GitHub repositories (requires PAT build secret).
-ARG odoo_org_repo=EMAS-Solutions/odoo
-ARG odoo_enterprise_repo=EMAS-Solutions/enterprise
-RUN mkdir -p /opt/odoo /opt/odoo/addons
-RUN --mount=type=secret,id=github_pat \
-    set -eu \
-    && GITHUB_TOKEN="$(tr -d '[:space:]' < /run/secrets/github_pat)" \
-    && if [ -z "${GITHUB_TOKEN}" ]; then \
-         echo "ERROR: github_pat secret is empty. Configure repository secret PAT with read access to ${odoo_org_repo} and ${odoo_enterprise_repo}." >&2; \
-         exit 1; \
-       fi \
-    && download_repo() { \
-         repo="${1}"; dest="${2}"; \
-         echo "Downloading ${repo} @ ${odoo_version}..."; \
-         curl -fsSL \
-           -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-           -H "Accept: application/vnd.github+json" \
-           "https://api.github.com/repos/${repo}/tarball/${odoo_version}" \
-         | tar -xz --strip-components=1 -C "${dest}"; \
-       } \
-    && download_repo "${odoo_org_repo}" /opt/odoo \
-    && download_repo "${odoo_enterprise_repo}" /opt/odoo/addons
+# Odoo sources are cloned into ci-deps/ by the CI workflow before docker build.
+COPY ci-deps/odoo /opt/odoo
+COPY ci-deps/enterprise/ /opt/odoo/addons/
 
 RUN pip install --no-cache-dir -e /opt/odoo \
     && pip list

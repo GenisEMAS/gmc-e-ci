@@ -49,6 +49,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+
+      - name: Clone Odoo community
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.odoo_org_repo }}
+          ref: ${{ matrix.odoo_version }}
+          token: ${{ secrets.PAT }}
+          path: ci-deps/odoo
+
+      - name: Clone Odoo enterprise
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.odoo_enterprise_repo }}
+          ref: ${{ matrix.odoo_version }}
+          token: ${{ secrets.PAT }}
+          path: ci-deps/enterprise
+
       - name: Prepare container image name
         id: image
         shell: bash
@@ -77,8 +94,6 @@ jobs:
             chrome_milestone=${{ matrix.chrome_milestone }}
             python_version=${{ matrix.python_version }}
             odoo_version=${{ matrix.odoo_version }}
-            odoo_org_repo=${{ matrix.odoo_org_repo }}
-            odoo_enterprise_repo=${{ matrix.odoo_enterprise_repo }}
           secrets: |
             github_pat=${{ secrets.PAT }}
           tags: |
@@ -105,8 +120,6 @@ jobs:
             chrome_milestone=${{ matrix.chrome_milestone }}
             python_version=${{ matrix.python_version }}
             odoo_version=${{ matrix.odoo_version }}
-            odoo_org_repo=${{ matrix.odoo_org_repo }}
-            odoo_enterprise_repo=${{ matrix.odoo_enterprise_repo }}
           secrets: |
             github_pat=${{ secrets.PAT }}
           tags: |
